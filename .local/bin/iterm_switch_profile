@@ -1,0 +1,14 @@
+#!/usr/bin/env osascript -l JavaScript
+
+function run(argv) {
+  windows = Application('iTerm').windows()
+  for (w in windows) {
+      tabs = windows[w].tabs()
+      for (t in tabs) {
+          sessions = tabs[t].sessions()
+          for (s in sessions) {
+              sessions[s].colorPreset = argv.join(' ')
+          }
+      }
+  }
+}

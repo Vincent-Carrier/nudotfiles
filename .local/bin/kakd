@@ -1,0 +1,8 @@
+#!/usr/local/bin/fish 
+
+set server (basename (pwd) | tr -d '.')
+if kak -l | grep $server
+  echo "eval -client client0 %{edit $argv}" | kak -p $server
+else
+  kak -s $server $argv
+end
