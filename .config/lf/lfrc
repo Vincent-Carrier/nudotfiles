@@ -1,9 +1,7 @@
 set drawbox
 set scrolloff 4
 
-set shell /bin/zsh
-set shellopts '-eu:--shwordsplit'
-set ifs "\n"
+set shell /usr/local/bin/fish
 
 map o &open $f
 map O $open --ask $f
@@ -11,32 +9,6 @@ map O $open --ask $f
 cmd trash %trash $fx
 map D trash
 
-cmd mkdir %{{
-  mkdir -p "$@"
-  lf -remote "send $id select \"$@\""
-}}
-map a mkdir
+map m push %mkdir<space>-p<space>
+map t push %touch<space>
 
-
-# Unmap the default binding
-map r
-# Rename the file with a completely different name
-map rc push :rename<space>
-# Edit the current filename
-map ra ${{
-	# get 'basename' of the selection
-	filename="${f##*/}"
-	# quote it so we won't deal with quotes in the lf -remote command
-	filename="$(printf '%q' "$filename")"
-	filename="${filename// /<space>}"
-	lf -remote "send $id push :rename<space>$filename"
-}}
-# Edit filename before the extension
-map re ${{
-	# get 'basename' of the selection
-	filename="${f##*/}"
-	# quote it so we won't deal with quotes in the lf -remote command
-	filename="$(printf '%q' "$filename")"
-	filename="${filename// /<space>}"
-	lf -remote "send $id push :rename<space>$filename<a-b><c-b>"
-}}
