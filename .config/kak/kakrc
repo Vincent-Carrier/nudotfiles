@@ -10,10 +10,10 @@ def -override dark-mode %{
 }
 
 eval %sh{
-  if [[ `defaults read -g AppleInterfaceStyle` = 'Dark' ]]; then
-    echo "dark-mode"
-  else
+  if [[ `defaults read -g AppleInterfaceStyle` = 'Light' ]]; then
     echo "light-mode"
+  else
+    echo "dark-mode"
   fi
 }
 
@@ -56,6 +56,8 @@ add-highlighter -override global/ number-lines -relative
 add-highlighter -override global/ show-whitespaces
 add-highlighter -override global/ wrap -marker \t\t\t\t -word
 
+def find -params 1 -shell-script-candidates %{ find . -type f } %{ edit %arg{1} }
+
 map global insert <tab> <c-n>
 map global insert <s-tab> <c-p>
 map global insert <c-o> '{<ret>}<esc>O'
@@ -71,10 +73,10 @@ map global normal , <space>
 map global normal <a-q> q
 map global normal <a-s-q> Q
 map global normal <c-e> ':edit-in-dir<ret>'
+map global normal <c-f> ':find '
+map global normal <c-b> ':b '
 map global normal <c-q> ':wq<ret>'
 map global normal <c-s> ':wa<ret>'
-map global normal <c-b> '[p'
-map global normal <c-f> ']p'
 map global normal <ret> ':'
 map global normal <space> ,
 map global normal D '<a-x>d'
@@ -88,7 +90,6 @@ map global normal w '/\w+<ret>'
 map global normal W '<a-/>\w+<ret>'
 map global normal Q 'i<space><esc>'
 map global object W <a-w> -docstring 'WORD'
-map global prompt <c-e> '<c-r>%'
 map global user P '!pbpaste<ret>' -docstring "pbpaste before"
 map global user R '|pbpaste<ret>' -docstring "pbpaste replace"
 map global user d '|pbcopy<ret>' -docstring "pbcopy delete"

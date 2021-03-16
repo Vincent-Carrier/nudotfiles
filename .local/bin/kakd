@@ -2,6 +2,7 @@
 
 set server (basename (pwd) | tr -d '.')
 if kak -l | grep $server
+  jobs > /dev/null; or fg
   echo "eval -client client0 %{edit $argv}" | kak -p $server
 else
   kak -s $server $argv
