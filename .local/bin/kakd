@@ -1,9 +1,8 @@
 #!/usr/local/bin/fish 
 
 set server (basename (pwd) | tr -d '.')
-if kak -l | grep $server
-  jobs > /dev/null; or fg
-  echo "eval -client client0 %{edit $argv}" | kak -p $server
+if kak -l | grep $server >/dev/null
+  kak -c $server $argv
 else
-  kak -s $server $argv
+  tmux new -d -s $server "kak -d -s $server" && kak -c $server $argv
 end

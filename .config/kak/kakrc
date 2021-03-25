@@ -10,7 +10,7 @@ def -override dark-mode %{
 }
 
 eval %sh{
-  if [[ `defaults read -g AppleInterfaceStyle` = 'Light' ]]; then
+  if [[ `defaults read -g AppleInterfaceStyle` != 'Dark' ]]; then
     echo "light-mode"
   else
     echo "dark-mode"
@@ -29,18 +29,26 @@ def -override ide %{
     set global docsclient tools
 }
 
-eval %sh{kak-lsp --kakoune -s $kak_session}
+eval %sh{kak-lsp -c $HOME/.config/kak-lsp/kak-lsp.toml --kakoune -s $kak_session}
 # set global lsp_cmd "kak-lsp -s %val{session} -vvv --log /tmp/kak-lsp.log"
 hook global WinSetOption filetype=(rust|python|go|javascript|typescript|c|cpp) %{
   try %{
     lsp-enable-window
     lsp-auto-hover-enable
     lsp-inlay-diagnostics-enable global
-    map global normal <space> ':enter-user-mode lsp<ret>' -docstring "LSP"
-    map global normal <c-a> ':lsp-diagnostics<ret>' -docstring "diagnostics"
+    map global user <space> ':enter-user-mode lsp<ret>' -docstring "LSP"
+    map global <c-r> ':lsp-rename-prompt<ret>' -docstring 'rename'
   }
 }
 
+hook global WinSetOption filetype=(go) %{
+  hook window -group semantic-tokens BufReload .* lsp-semantic-tokens
+  hook window -group semantic-tokens NormalIdle .* lsp-semantic-tokens
+  hook window -group semantic-tokens InsertIdle .* lsp-semantic-tokens
+  hook -once -always window WinSetOption filetype=.* %{
+    remove-hooks window semantic-tokens
+  }
+}
 hook global BufSetOption filetype=(go) %{
     hook buffer BufWritePre .* lsp-formatting-sync
 }
@@ -56,13 +64,15 @@ add-highlighter -override global/ number-lines -relative
 add-highlighter -override global/ show-whitespaces
 add-highlighter -override global/ wrap -marker \t\t\t\t -word
 
-def find -params 1 -shell-script-candidates %{ find . -type f } %{ edit %arg{1} }
+def find -params 1 -shell-script-candidates %{ fd --type f } %{ edit %arg{1} }
 
 map global insert <tab> <c-n>
 map global insert <s-tab> <c-p>
 map global insert <c-o> '{<ret>}<esc>O'
-map global normal  '<c-g>' ':grep<ret>' -docstring 'grep'
-map global normal  '<c-x>' ':make<ret>' -docstring 'make'
+map global normal '<c-g>' ':grep<ret>' -docstring 'grep'
+map global normal '<c-x>' ':make<ret>' -docstring 'make'
+map global normal <c-o> ':bn<ret>'
+map global normal <c-i> ':bp<ret>'
 map global normal "'" '<a-;>'
 map global normal '#' ':comment-line<ret>'
 map global normal ';' '<a-.>'
@@ -79,16 +89,29 @@ map global normal <c-q> ':wq<ret>'
 map global normal <c-s> ':wa<ret>'
 map global normal <ret> ':'
 map global normal <space> ,
+map global normal b 'b;'
+map global normal e 'e;'
 map global normal D '<a-x>d'
 map global normal x '<a-d>'
 map global normal X '<a-x><a-d>'
 map global normal K 'K<a-x>'
 map global normal J 'J<a-x>'
-map global normal Y 'xy<a-p>'
+map global normal Y '<a-x>y'
 map global normal v '<a-i>'
+map global object v '<esc><a-x>_'
+map global normal V '<a-a>'
+map global object V '<esc><a-x>'
 map global normal w '/\w+<ret>'
 map global normal W '<a-/>\w+<ret>'
-map global normal Q 'i<space><esc>'
+map global normal m '/\S+<ret>'
+map global normal M '<a-/>\S+<ret>'
+map global normal ] %{/'[^\n]*?'|"[^\n]*?"|`[^\n]*?`<ret><a-:>H<a-;>L<a-;>}
+map global normal [ %{<a-/>'[^\n]*?'|"[^\n]*?"|`[^\n]*?`<ret><a-:>H<a-;>L<a-;>}
+map global normal } %{/\{[^\n]*?\}|\([^\n]*?\)|\[[^\n]*?\]<ret><a-:>H<a-;>L<a-;>}
+map global normal { %{<a-/>\{[^\n]*?\}|\([^\n]*?\)|\[[^\n]*?\]<ret><a-:>H<a-;>L<a-;>}
+map global normal <a-b> %{<a-/>[A-Za-z][a-z0-9]+<ret>}
+map global normal <a-e> %{/[A-Za-z][a-z0-9]+<ret>}
+map global normal Q '<a-:>H<a-;>L<a-;>'
 map global object W <a-w> -docstring 'WORD'
 map global user P '!pbpaste<ret>' -docstring "pbpaste before"
 map global user R '|pbpaste<ret>' -docstring "pbpaste replace"
@@ -101,6 +124,9 @@ hook global WinSetOption .* %{
   map global normal <c-l> '<space>;'
 }
 
+hook global BufSetOption filetype=(css) %{
+  map buffer normal '#' '<a-x>_:comment-block<ret>'
+}
 
 
 declare-option -hidden str my_grep_buffer
@@ -169,7 +195,7 @@ def -override -hidden readline-unix-word-rubout %{
 }
 
 
-map global insert <c-t> '<a-;><gt>' -docstring beginning-of-line
+map global insert <c-t> '<a-;><a-gt>' -docstring indent-line
 map global insert <c-a> <home> -docstring beginning-of-line
 map global insert <c-e> <end> -docstring end-of-line
 map global insert <c-f> <right> -docstring forward-char
