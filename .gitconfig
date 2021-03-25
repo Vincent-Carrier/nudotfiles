@@ -1,0 +1,14 @@
+[user]
+	email = vincentcarrier@icloud.com
+	name = Vincent Carrier
+
+[url "https://github.com/"]
+    insteadOf = gh:
+
+[credential]
+    helper = osxkeychain
+
+[color]
+    ui = true
+[core]
+	excludesFile = ~/.gitignore
