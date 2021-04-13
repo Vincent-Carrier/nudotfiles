@@ -1,5 +1,5 @@
 snippet_support = true
-verbosity = 2
+# verbosity = 2
 
 [semantic_scopes]
 # Map textmate scopes to kakoune faces for semantic highlighting
@@ -176,19 +176,20 @@ offset_encoding = "utf-8"
 # command = "solargraph"
 # args = ["stdio"]
 #
+
+[language.rust]
+filetypes = ["rust"]
+roots = ["Cargo.toml"]
+command = "sh"
+args = ["-c", "if command -v rustup >/dev/null; then $(rustup which rls); else rls; fi"]
+
 # [language.rust]
 # filetypes = ["rust"]
 # roots = ["Cargo.toml"]
-# command = "sh"
-# args = ["-c", "if command -v rustup >/dev/null; then $(rustup which rls); else rls; fi"]
-#
-# # [language.rust]
-# # filetypes = ["rust"]
-# # roots = ["Cargo.toml"]
-# # command = "sh"
-# # args = ["-c", "if command -v rustup >/dev/null; then $(rustup which rust-analyzer); else rust-analyzer; fi"]
-# #
-# # [language.rust.initialization_options]
+# command = "rust-analyzer"
+
+# [language.rust.initialization_options]
+# rustfmt.overrideCommand = ["rustup", "run", "stable", "rustfmt"]
 # # # If you get 'unresolved proc macro' warnings, you have two options
 # # # 1. The safe choice is two disable the warning:
 # # diagnostics.disabled = ["unresolved-proc-macro"]
@@ -196,7 +197,13 @@ offset_encoding = "utf-8"
 # # procMacro.enable = true
 # # cargo.loadOutDirsFromCheck = true
 # # # See https://github.com/rust-analyzer/rust-analyzer/issues/6448
-#
+
+[language.svelte]
+filetypes = ["svelte"]
+roots = ["package.json"]
+command = "svelteserver"
+args = ["--stdio"]
+
 # [language.terraform]
 # filetypes = ["terraform"]
 # roots = ["*.tf"]

@@ -1,4 +1,4 @@
-# Defined in /var/folders/gh/ps_g7zt12bq_0cdh9z3bsvpc0000gn/T//fish.Yb8oJA/lightbulb.fish @ line 2
+# Defined in /var/folders/4n/lm2k3gws2ys3qzl9ffzz38qm0000gn/T//fish.BoWYrk/lightbulb.fish @ line 2
 function lightbulb
     if is_dark
       iterm_switch_profile 'Afterglow'
@@ -6,8 +6,8 @@ function lightbulb
       set -U DARK true
       set kak_theme "dark-mode"
     else
-      iterm_switch_profile 'Tomorrow'
-      set -Ux BAT_THEME ansi-light
+      iterm_switch_profile 'BlulocoLight'
+      set -Ux BAT_THEME ansi
       set -e DARK
       set kak_theme "light-mode"
     end

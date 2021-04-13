@@ -1,8 +1,12 @@
-#!/usr/local/bin/fish 
+#!/usr/bin/env fish
 
+kak -clear
 set server (basename (pwd) | tr -d '.')
+echo -ne "\033];<b>"(basename $argv)"</b>\007"
+set -x TTY (tty)
 if kak -l | grep $server >/dev/null
   kak -c $server $argv
 else
-  tmux new -d -s $server "kak -d -s $server" && kak -c $server $argv
+  kak -d -s $server &
+  kak -c $server $argv
 end

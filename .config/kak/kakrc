@@ -1,224 +1,131 @@
+source "%val{config}/bindings.kak"
+
 def -override light-mode %{
-  colorscheme kaleidoscope-light
-  face global Default rgb:1c1c1c,default
+	colorscheme default
+	face global PrimaryCursor black,white
+	face global SecondaryCursor yellow,white
+	face global comment rgb:888888+i
+	face global value bright-magenta
+	face global WrapMarker rgb:cccccc
+	face global Whitespace rgb:cccccc
+	face global Default rgb:1c1c1c,default
+	face global MenuBackground white,bright-green
 }
 def -override dark-mode %{
-  colorscheme tomorrow-night
-  face global Default rgb:c5c8c6,default
-  face global BufferPadding rgb:c5c8c6,default
-  face global Whitespace rgb:555555,default+f
+	colorscheme tomorrow-night
+	face global Default rgb:c5c8c6
+	face global BufferPadding rgb:c5c8c6
+	face global Whitespace rgb:555555+f
 }
 
+light-mode
 eval %sh{
-  if [[ `defaults read -g AppleInterfaceStyle` != 'Dark' ]]; then
-    echo "light-mode"
-  else
-    echo "dark-mode"
-  fi
+	if [[ `defaults read -g AppleInterfaceStyle 2>/dev/null` = 'Dark' ]]; then
+		echo "dark-mode"
+	fi
 }
+
+face global search default+bi
+add-highlighter -override global/search dynregex '%reg{/}' 0:search
 
 set global grepcmd 'rg --no-heading -n --column'
 set global scrolloff 8,5
 
 def -override ide %{
-    rename-client main
-    set global jumpclient main
-
-    new rename-client tools
-    set global toolsclient tools
-    set global docsclient tools
+	rename-client main
+	set global jumpclient main
+	new rename-client tools
+	set global toolsclient tools
+	set global docsclient tools
+		hook window NormalIdle .* %{
+			lsp-diagnostics
+		}
 }
 
-eval %sh{kak-lsp -c $HOME/.config/kak-lsp/kak-lsp.toml --kakoune -s $kak_session}
-# set global lsp_cmd "kak-lsp -s %val{session} -vvv --log /tmp/kak-lsp.log"
-hook global WinSetOption filetype=(rust|python|go|javascript|typescript|c|cpp) %{
-  try %{
-    lsp-enable-window
-    lsp-auto-hover-enable
-    lsp-inlay-diagnostics-enable global
-    map global user <space> ':enter-user-mode lsp<ret>' -docstring "LSP"
-    map global <c-r> ':lsp-rename-prompt<ret>' -docstring 'rename'
-  }
+def -override -params 1 title %{
+	nop %sh{ printf "\e]0;<b>%s</b>\a" "$1" > $kak_client_env_TTY } 
+}
+hook global WinDisplay .* %{
+	title %sh{ echo $kak_buffile }
 }
 
-hook global WinSetOption filetype=(go) %{
-  hook window -group semantic-tokens BufReload .* lsp-semantic-tokens
-  hook window -group semantic-tokens NormalIdle .* lsp-semantic-tokens
-  hook window -group semantic-tokens InsertIdle .* lsp-semantic-tokens
-  hook -once -always window WinSetOption filetype=.* %{
-    remove-hooks window semantic-tokens
-  }
+hook global InsertChar .* %{ exec '<a-;>;' }
+hook -once global RawKey <c-v> %{ exec '<esc>!pbpaste<ret>' }
+
+eval %sh{
+	if [ ! $kak_opt_lsp_cmd ]; then
+		kak-lsp -c $HOME/.config/kak-lsp/kak-lsp.toml --kakoune -s $kak_session # -vvv --log /tmp/kak-lsp.log
+	fi
 }
-hook global BufSetOption filetype=(go) %{
-    hook buffer BufWritePre .* lsp-formatting-sync
-}
-hook global BufSetOption filetype=(html) %{
-    set buffer formatcmd 'prettier --parser '%opt{filetype}
-    map buffer insert <c-v> '<esc>!emmet '
-    map buffer normal <c-v> '!emmet '
-    hook buffer BufWritePre .* format-buffer
+hook -once global WinSetOption filetype=(rust|python|go|javascript|typescript|svelte|json|css) %{
+	set global lsp_cmd "kak-lsp -s %val{session} -c $HOME/.config/kak-lsp/kak-lsp.toml"  #-vvv --log /tmp/kak-lsp.log
+	try %{
+		lsp-enable-window
+		echo -debug "Enabling LSP for filtetype %opt{filetype}"
+		lsp-auto-hover-enable
+		set global lsp_hover_max_lines 10
+		map window user <space> ':enter-user-mode lsp<ret>' -docstring "LSP"
+		map window normal <c-r> ':lsp-rename-prompt<ret>' -docstring 'rename'
+		map window normal <c-w> ':lsp-formatting-sync<ret>'
+		face global DiagnosticWarning default,rgb:ffffcc+u
+		face global DiagnosticError default,rgb:ffcccc+u
+		face buffer InlayDiagnosticError red+i
+		face buffer InlayDiagnosticWarning bright-yellow+i
+		lsp-diagnostic-lines-disable window
+		lsp-inlay-diagnostics-enable window
+
+		hook window NormalIdle .* %{
+			rmhl window/lsp_diagnostics
+			lsp-inlay-diagnostics-enable window
+		}
+		hook window ModeChange push:normal:insert %{
+			lsp-inlay-diagnostics-disable window
+		}
+	}
 }
 
-hook global WinCreate ^[^*]+$ %{editorconfig-load}
+hook global WinSetOption filetype=(go|rust) %{
+	hook window -group semantic-tokens BufReload .* lsp-semantic-tokens
+	hook window -group semantic-tokens NormalIdle .* lsp-semantic-tokens
+	hook window -group semantic-tokens InsertIdle .* lsp-semantic-tokens
+	hook -once -always window WinSetOption filetype=.* %{
+		remove-hooks window semantic-tokens
+	}
+}
+
+hook global BufSetOption filetype=(html|css|json|yaml|md|graphql) %{
+	set buffer formatcmd "prettier --parser %opt{filetype}"
+	hook buffer BufWritePre .* format-buffer
+}
+hook global BufSetOption .*?\.(svelte|html|md) %{
+	map buffer insert <c-s> '<a-;>!emmet '
+	map buffer normal ',' '!emmet '
+}
+
+set global tabstop 2
+set global indentwidth 0
+hook global BufSetOption filetype=(rust|ruby) %{
+	set buffer indentwidth 2
+}
+hook global BufSetOption filetype=(python) %{
+	set buffer indentwidth 4
+}
+
 add-highlighter -override global/ number-lines -relative
 add-highlighter -override global/ show-whitespaces
-add-highlighter -override global/ wrap -marker \t\t\t\t -word
+add-highlighter -override global/ wrap -marker >>>> -word
 
-def find -params 1 -shell-script-candidates %{ fd --type f } %{ edit %arg{1} }
-
-map global insert <tab> <c-n>
-map global insert <s-tab> <c-p>
-map global insert <c-o> '{<ret>}<esc>O'
-map global normal '<c-g>' ':grep<ret>' -docstring 'grep'
-map global normal '<c-x>' ':make<ret>' -docstring 'make'
-map global normal <c-o> ':bn<ret>'
-map global normal <c-i> ':bp<ret>'
-map global normal "'" '<a-;>'
-map global normal '#' ':comment-line<ret>'
-map global normal ';' '<a-.>'
-map global normal '<a-;>' ';'
-map global normal '<c-n>' ':next-match<ret>' -docstring 'next match'
-map global normal '<c-p>' ':previous-match<ret>' -docstring 'prev match'
-map global normal , <space>
-map global normal <a-q> q
-map global normal <a-s-q> Q
-map global normal <c-e> ':edit-in-dir<ret>'
-map global normal <c-f> ':find '
-map global normal <c-b> ':b '
-map global normal <c-q> ':wq<ret>'
-map global normal <c-s> ':wa<ret>'
-map global normal <ret> ':'
-map global normal <space> ,
-map global normal b 'b;'
-map global normal e 'e;'
-map global normal D '<a-x>d'
-map global normal x '<a-d>'
-map global normal X '<a-x><a-d>'
-map global normal K 'K<a-x>'
-map global normal J 'J<a-x>'
-map global normal Y '<a-x>y'
-map global normal v '<a-i>'
-map global object v '<esc><a-x>_'
-map global normal V '<a-a>'
-map global object V '<esc><a-x>'
-map global normal w '/\w+<ret>'
-map global normal W '<a-/>\w+<ret>'
-map global normal m '/\S+<ret>'
-map global normal M '<a-/>\S+<ret>'
-map global normal ] %{/'[^\n]*?'|"[^\n]*?"|`[^\n]*?`<ret><a-:>H<a-;>L<a-;>}
-map global normal [ %{<a-/>'[^\n]*?'|"[^\n]*?"|`[^\n]*?`<ret><a-:>H<a-;>L<a-;>}
-map global normal } %{/\{[^\n]*?\}|\([^\n]*?\)|\[[^\n]*?\]<ret><a-:>H<a-;>L<a-;>}
-map global normal { %{<a-/>\{[^\n]*?\}|\([^\n]*?\)|\[[^\n]*?\]<ret><a-:>H<a-;>L<a-;>}
-map global normal <a-b> %{<a-/>[A-Za-z][a-z0-9]+<ret>}
-map global normal <a-e> %{/[A-Za-z][a-z0-9]+<ret>}
-map global normal Q '<a-:>H<a-;>L<a-;>'
-map global object W <a-w> -docstring 'WORD'
-map global user P '!pbpaste<ret>' -docstring "pbpaste before"
-map global user R '|pbpaste<ret>' -docstring "pbpaste replace"
-map global user d '|pbcopy<ret>' -docstring "pbcopy delete"
-map global user p '<a-!>pbpaste<ret>' -docstring "pbpaste after"
-map global user y '<a-|>pbcopy<ret>' -docstring "pbcopy"
-
-
-hook global WinSetOption .* %{
-  map global normal <c-l> '<space>;'
-}
-
-hook global BufSetOption filetype=(css) %{
-  map buffer normal '#' '<a-x>_:comment-block<ret>'
-}
-
-
-declare-option -hidden str my_grep_buffer
-hook -group my global WinDisplay \
-	\*(?:grep|find|make|references|diagnostics|implementations|symbols|cargo)\* %{
-	set-option global my_grep_buffer %val{bufname}
-}
-define-command -override next-match \
-	-docstring 'Jump to the next match in a grep-like buffer' %{
-	evaluate-commands -try-client %opt{jumpclient} %{
-		buffer %opt{my_grep_buffer}
-		execute-keys "<a-l> /^[^:\n]+:\d+:<ret>"
-		grep-jump
-	}
-	try %{ evaluate-commands -client %opt{toolsclient} %{
-		buffer %opt{my_grep_buffer}
-		execute-keys gg %opt{grep_current_line}g
-	}}
-}
-define-command -override previous-match \
-	-docstring 'Jump to the previous match in a grep-like buffer' %{
-	evaluate-commands -try-client %opt{jumpclient} %{
-		buffer %opt{my_grep_buffer}
-		execute-keys "g<a-h> <a-/>^[^:\n]+:\d+:<ret>"
-		grep-jump
-	}
-	try %{ evaluate-commands -client %opt{toolsclient} %{
-		buffer %opt{my_grep_buffer}
-		execute-keys gg %opt{grep_current_line}g
-	}}
-}
-
-def -override -hidden edit-in-dir %{
-  exec ":e "%sh{echo ${kak_buffile%/*}}"/"
-}
-
-
-declare-user-mode surround
-map global normal q ':enter-user-mode surround<ret>'
-map global surround s ':surround<ret>' -docstring 'surround'
-map global surround c ':change-surround<ret>' -docstring 'change'
-map global surround d ':delete-surround<ret>' -docstring 'delete'
-map global surround t ':select-surrounding-tag<ret>' -docstring 'select tag'
-
-
-# readline
-def -override -hidden readline-forward-word %{
-    # Expects to be called from insert mode.
-    try %{
-        execute-keys '<a-;><a-/>.<ret><a-;>/[a-zA-Z0-9]+<ret><right>'
-    }
-}
-
-def -override -hidden readline-backward-word %{
-    # Expects to be called from insert mode.
-    try %{
-        execute-keys '<a-;><a-/>[A-Za-z0-9]+<ret><a-:><a-;><a-;><a-;>;'
-    }
-}
-
-def -override -hidden readline-unix-word-rubout %{
-    # Expects to be called from insert mode.
-    try %{
-        execute-keys '<a-;><a-/>\S+\s*<ret><a-;>d'
-    }
-}
-
-
-map global insert <c-t> '<a-;><a-gt>' -docstring indent-line
-map global insert <c-a> <home> -docstring beginning-of-line
-map global insert <c-e> <end> -docstring end-of-line
-map global insert <c-f> <right> -docstring forward-char
-map global insert <c-b> <left> -docstring backward-char
-map global insert <c-n> <down><c-u>
-map global insert <c-p> <up><c-u>
-map global insert <a-f> '<a-;>: readline-forward-word<ret>' -docstring forward-word
-map global insert <a-b> '<a-;>: readline-backward-word<ret>' -docstring backward-word
-map global insert <c-l> '<a-;>vt' -docstring clear-screen
-map global insert <c-d> <del> -docstring delete-char
-map global insert <c-h> <backspace> -docstring backward-delete-char
-map global insert <c-q> <c-v> -docstring quoted-insert
-map global insert <a-tab> '<tab>' -docstring tab-insert
-map global insert <c-k> '<a-;>;<a-;>Gl<a-;>"_d' -docstring kill-line
-map global insert <c-u> '<a-;>;<a-;>h<a-;>Gh<a-;>"_d' -docstring unix-line-discard
-map global insert <a-d> '<a-;>;<a-;>E<a-;>"_d' -docstring kill-word
-map global insert <c-w> '<a-;>: readline-unix-word-rubout<ret>' -docstring unix-word-rubout
-map global insert <c-y> '<c-r>"' -docstring yank
-map global prompt <c-y> '<c-r>"' -docstring yank
-map global prompt <c-c> <esc> -docstring abort
 
 hook global BufCreate (.*/)?(\.kakrc\.local) %{
-    set-option buffer filetype kak
+	set buffer filetype kak
 }
+hook global BufCreate .*?\.[cm]js %{
+	set buffer filetype javascript
+}
+
+def -override reload %{
+	source ~/.config/kak/kakrc
+}
+
 try %{ source .kakrc.local }
 
