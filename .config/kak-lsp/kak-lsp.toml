@@ -44,10 +44,10 @@ comment = "comment"
 # command = "bash-language-server"
 # args = ["start"]
 #
-# [language.c_cpp]
-# filetypes = ["c", "cpp"]
-# roots = ["compile_commands.json", ".clangd"]
-# command = "clangd"
+[language.c_cpp]
+filetypes = ["c", "cpp"]
+roots = ["compile_commands.json", ".clangd"]
+command = "/Library/Developer/CommandLineTools/usr/bin/clangd"
 #
 # [language.crystal]
 # filetypes = ["crystal"]
@@ -158,11 +158,11 @@ offset_encoding = "utf-8"
 # [language.php.initialization_options]
 # storagePath = "/tmp/intelephense"
 #
-# [language.python]
-# filetypes = ["python"]
-# roots = ["requirements.txt", "setup.py", ".git", ".hg"]
-# command = "pyls"
-# offset_encoding = "utf-8"
+[language.python]
+filetypes = ["python"]
+roots = ["requirements.txt", "setup.py", ".git", ".hg"]
+command = "pyls"
+offset_encoding = "utf-8"
 #
 # [language.reason]
 # filetypes = ["reason"]

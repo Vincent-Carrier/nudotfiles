@@ -2,12 +2,13 @@ source "%val{config}/bindings.kak"
 
 def -override light-mode %{
 	colorscheme default
-	face global PrimaryCursor black,white
-	face global SecondaryCursor yellow,white
+	face global PrimaryCursor white,black
+	face global SecondaryCursor white,yellow
+	face global SecondarySelection white,blue+fg
 	face global comment rgb:888888+i
 	face global value bright-magenta
 	face global WrapMarker rgb:cccccc
-	face global Whitespace rgb:cccccc
+	face global Whitespace rgb:cccccc+f
 	face global Default rgb:1c1c1c,default
 	face global MenuBackground white,bright-green
 }
@@ -42,26 +43,27 @@ def -override ide %{
 		}
 }
 
+set global modelinefmt '%val{bufname} {{context_info}} {{mode_info}} %val{client}'
 def -override -params 1 title %{
-	nop %sh{ printf "\e]0;<b>%s</b>\a" "$1" > $kak_client_env_TTY } 
+	# nop %sh{ printf "\e]0;%s\a" "$1" > $kak_client_env_TTY } 
+	nop %sh{ tmux rename-window "$1" } 
 }
 hook global WinDisplay .* %{
-	title %sh{ echo $kak_buffile }
+	title %opt{current_bufname}
 }
 
 hook global InsertChar .* %{ exec '<a-;>;' }
-hook -once global RawKey <c-v> %{ exec '<esc>!pbpaste<ret>' }
 
 eval %sh{
 	if [ ! $kak_opt_lsp_cmd ]; then
 		kak-lsp -c $HOME/.config/kak-lsp/kak-lsp.toml --kakoune -s $kak_session # -vvv --log /tmp/kak-lsp.log
 	fi
 }
-hook -once global WinSetOption filetype=(rust|python|go|javascript|typescript|svelte|json|css) %{
+hook -once global WinSetOption filetype=(c|cpp|rust|python|go|javascript|typescript|svelte|json|css) %{
 	set global lsp_cmd "kak-lsp -s %val{session} -c $HOME/.config/kak-lsp/kak-lsp.toml"  #-vvv --log /tmp/kak-lsp.log
 	try %{
 		lsp-enable-window
-		echo -debug "Enabling LSP for filtetype %opt{filetype}"
+		echo -debug "Enabling LSP for filetype %opt{filetype}"
 		lsp-auto-hover-enable
 		set global lsp_hover_max_lines 10
 		map window user <space> ':enter-user-mode lsp<ret>' -docstring "LSP"
@@ -104,16 +106,16 @@ hook global BufSetOption .*?\.(svelte|html|md) %{
 
 set global tabstop 2
 set global indentwidth 0
-hook global BufSetOption filetype=(rust|ruby) %{
+hook global BufSetOption filetype=(c|cpp|rust|ruby) %{
 	set buffer indentwidth 2
 }
 hook global BufSetOption filetype=(python) %{
 	set buffer indentwidth 4
 }
 
-add-highlighter -override global/ number-lines -relative
+add-highlighter -override global/ number-lines -relative -hlcursor
 add-highlighter -override global/ show-whitespaces
-add-highlighter -override global/ wrap -marker >>>> -word
+add-highlighter -override global/ wrap -marker >> -word
 
 
 hook global BufCreate (.*/)?(\.kakrc\.local) %{
