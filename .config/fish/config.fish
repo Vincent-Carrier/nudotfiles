@@ -1,3 +1,4 @@
+set -e fish_greeting
 set -a PATH /opt/homebrew/bin ~/.local/bin ~/go/bin ~/.cargo/bin ~/Library/Python/3.8/bin
 set -a PATH ~/Library/Caches/.wasm-pack/.wasm-bindgen-cargo-install-0.2.73/bin
 set -a CDPATH ~ ~/code ~/.config
@@ -20,6 +21,7 @@ set -gx FZF_DEFAULT_OPTS '--bind=ctrl-j:accept,ctrl-k:kill-line'
 if status is-interactive
 	bind \cq 'set f (fzf --preview \'bat --color=always {}\' --preview-window=down) && kakd $f && commandline -f repaint'
 	bind \cu 'if test -z (commandline); search && commandline -f repaint; else; commandline -f backward-kill-line; end'
+	bind \cw backward-kill-word
 	bind \ck 'if test -z (commandline); lf && commandline -f repaint; else; commandline -f kill-line; end'
 	bind \cg 'if test -z (commandline); lazygit && commandline -f repaint; else; commandline -f kill-line; end'
 	bind \cz 'if test -z (commandline); fg && commandline -f repaint; else; commandline -f undo; end'
@@ -35,3 +37,5 @@ end
 
 
 # bass (ssh-agent -s) > /dev/null
+#
+status --is-interactive; and source (rbenv init -|psub)

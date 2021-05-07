@@ -116,12 +116,12 @@ offset_encoding = "utf-8"
 # command = "html-languageserver"
 # args = ["--stdio"]
 #
-# [language.javascript]
-# filetypes = ["javascript"]
-# roots = [".flowconfig"]
-# command = "flow"
-# args = ["lsp"]
-#
+[language.typescript]
+filetypes = ["typescript", "javascript"]
+roots = ["package.json"]
+command = "typescript-language-server"
+args = ["--stdio"]
+
 # [language.json]
 # filetypes = ["json"]
 # roots = ["package.json"]
